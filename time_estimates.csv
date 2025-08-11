@@ -1,0 +1,25 @@
+Phase,Task ID,Description,Estimated Hours,Actual Hours,Status
+1. Planning & Setup,1.1,Project Initialization (Git, venv, boilerplate),1.0,0.8,Completed
+1. Planning & Setup,1.2,"Data Loading, Exploration & Schema Analysis",0.5,0.7,Completed
+1. Planning & Setup,1.3,Create Time Estimation CSV,0.5,0.5,Completed
+2. Product Service (RAG),2.1,"Design product-search service API spec",0.5,0.4,Completed
+2. Product Service (RAG),2.2,"Implement data preprocessing and vector embedding generation script",2.0,2.5,Completed
+2. Product Service (RAG),2.3,"Implement vector search/retrieval logic (using FAISS)",1.5,1.8,Completed
+2. Product Service (RAG),2.4,"Build the RESTful API service (FastAPI)",1.0,1.2,Completed
+2. Product Service (RAG),2.5,Containerize the service (Dockerfile),0.5,0.5,Completed
+3. Order Service,3.1,Design order-lookup service API spec,0.5,0.4,Completed
+3. Order Service,3.2,"Implement mock API functions (data filtering)",1.0,0.8,Completed
+3. Order Service,3.3,Build the RESTful API service,1.0,1.0,Completed
+3. Order Service,3.4,Containerize the service (Dockerfile),0.5,0.5,Completed
+4. Chat Service (Orchestrator),4.1,Design chat-service API spec,0.5,0.4,Completed
+4. Chat Service (Orchestrator),4.2,"Implement intent classification logic",1.0,1.5,Completed
+4. Chat Service (Orchestrator),4.3,"Implement inter-service communication",1.0,3.5,Completed
+4. Chat Service (Orchestrator),4.4,"Integrate with LLM for response generation (RAG pattern)",2.0,2.5,Completed
+4. Chat Service (Orchestrator),4.5,Implement basic conversational state management,1.0,0.8,Completed
+4. Chat Service (Orchestrator),4.6,Containerize the service (Dockerfile),0.5,0.5,Completed
+5. Deployment & Documentation,5.1,"Create docker-compose.yml for local testing",1.0,1.2,Completed
+5. Deployment & Documentation,5.2,"Deploy services to a public platform",2.0,2.8,Completed
+5. Deployment & Documentation,5.3,Write comprehensive README.md with testing instructions,1.5,1.0,Completed
+5. Deployment & Documentation,5.4,Generate and document 10 sample Q&A pairs,1.0,0.8,Completed
+6. Bonus Features,6.1,Develop a simple HTML/JS frontend for the chatbot,2.5,3.0,Completed
+,,Total,25.0,29.1,
