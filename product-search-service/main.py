@@ -7,7 +7,6 @@ import numpy as np
 
 app = FastAPI()
 
-# These paths are relative to the WORKDIR /app in the container
 INDEX_PATH = "products.index"
 DATA_PATH = "products_data.pkl"
 

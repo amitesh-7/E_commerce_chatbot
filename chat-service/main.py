@@ -4,32 +4,39 @@ import re
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "null", 
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 try:
     genai.configure(api_key=os.getenv("API_KEY"))
     llm = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    print(f"Warning: Could not configure Gemini. LLM will not be available. Error: {e}")
+    print(f"Warning: Could not configure Gemini. Error: {e}")
     llm = None
 
-# This URL points to the other container by its service name.
 ORDER_API_BASE_URL = "http://order-lookup-service:8000/data"
-
-# This URL uses a special Docker hostname to connect back to the host machine,
-# bypassing potential container-to-container DNS issues.
 PRODUCT_API_URL = "http://host.docker.internal:8002/search"
-
 
 class ChatQuery(BaseModel):
     query: str
     session_id: str
 
 def classify_intent_and_extract_entities(query: str):
-    """
-    Parses the user query to determine intent and extract relevant details.
-    """
     query_lower = query.lower()
     order_keywords = ["order", "purchase", "shipping", "status", "my last"]
     customer_id_match = re.search(r'\b\d{5,}\b', query)
@@ -45,9 +52,6 @@ def classify_intent_and_extract_entities(query: str):
 
 @app.post("/chat")
 async def chat(chat_query: ChatQuery):
-    """
-    Main chat endpoint that routes requests based on user intent.
-    """
     if not llm:
         raise HTTPException(status_code=503, detail="LLM is not available. Check API Key.")
 
@@ -81,16 +85,18 @@ async def chat(chat_query: ChatQuery):
             except httpx.RequestError as e:
                 context = f"Context: Could not connect to the product service: {e}"
 
-    prompt = f"""You are a helpful and friendly e-commerce assistant.
-    Use the provided context to answer the user's question.
-    If the context says no data was found, inform the user politely.
-    If there is no context, answer the question based on general knowledge.
 
+    prompt = f"""You are a helpful and friendly e-commerce assistant. 
+    Your primary goal is to answer the user's question based ONLY on the context provided below.
+
+    **Context:**
     {context}
 
-    User Question: {chat_query.query}
+    **User Question:**
+    {chat_query.query}
 
-    Answer:"""
+    Based strictly on the context above, answer the user's question. If the user's question contains multiple parts, only answer the part that is relevant to the provided context. Ignore any parts of the question that are not related to the context.
+    """
     
     llm_response = llm.generate_content(prompt)
     return {"response": llm_response.text}

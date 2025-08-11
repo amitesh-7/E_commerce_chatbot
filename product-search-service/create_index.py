@@ -11,10 +11,8 @@ SCRIPT_DIR = Path(__file__).parent
 DATA_PATH = SCRIPT_DIR.parent / "data" / "Product_info.csv"
 df = pd.read_csv(DATA_PATH)
 
-# <<< FIX: Replace all numpy NaN values with Python's None, which is JSON compliant.
 df.replace({np.nan: None}, inplace=True)
 
-# Define the columns we need for our text and fill any remaining nulls (if any)
 text_columns = ['title', 'description', 'features']
 for col in text_columns:
     if col in df.columns:

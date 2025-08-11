@@ -20,8 +20,6 @@ except FileNotFoundError:
 
 @app.get("/data/customer/{customer_id}")
 def get_customer_data(customer_id: int):
-    """Retrieve all records for a specific Customer ID."""
-    # <<< FIX: Use the correct column name 'Customer_Id'
     filtered_data = df[df["Customer_Id"] == customer_id]
     if filtered_data.empty:
         return {"error": f"No data found for Customer ID {customer_id}"}
@@ -30,7 +28,6 @@ def get_customer_data(customer_id: int):
 @app.get("/data/order-priority/{priority}")
 def get_orders_by_priority(priority: str):
     """Retrieve all orders with the given priority."""
-    # <<< FIX: Use the correct column name 'Order_Priority'
     filtered_data = df[df["Order_Priority"].str.contains(priority, case=False, na=False)]
     if filtered_data.empty:
         return {"error": f"No data found for Order Priority '{priority}'"}
