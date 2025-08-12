@@ -3,6 +3,7 @@ import httpx
 import re
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import time
 import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -61,31 +62,35 @@ async def chat(chat_query: ChatQuery):
     if intent == "ORDER_INQUIRY_NO_ID":
         return {"response": "I can help with order information. Could you please provide your Customer ID?"}
 
-    async with httpx.AsyncClient(timeout=20.0) as client:
-        if intent == "ORDER_BY_CUSTOMER_ID":
-            customer_id = entities.get("customer_id")
-            api_url = f"{ORDER_API_BASE_URL}/customer/{customer_id}"
+    timeout = httpx.Timeout(30.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        for attempt in range(3):
             try:
-                response = await client.get(api_url)
-                response_data = response.json()
-                if isinstance(response_data, dict) and "error" in response_data:
-                    context = f"Context: {response_data['error']}"
-                else:
-                    context = "Context from order history:\n" + "\n".join(
-                        [f"- Order on {o.get('Order_Date', 'N/A')} for '{o.get('Product_Category', 'N/A')}' with priority '{o.get('Order_Priority', 'N/A')}'" for o in response_data[:5]]
-                    )
+                if intent == "ORDER_BY_CUSTOMER_ID":
+                    customer_id = entities.get("customer_id")
+                    api_url = f"{ORDER_API_BASE_URL}/customer/{customer_id}"
+                    response = await client.get(api_url)
+                    response.raise_for_status() # Raise an exception for bad status codes
+                    response_data = response.json()
+                    if isinstance(response_data, dict) and "error" in response_data:
+                        context = f"Context: {response_data['error']}"
+                    else:
+                        context = "Context from order history:\n" + "\n".join(
+                            [f"- Order on {o.get('Order_Date', 'N/A')} for '{o.get('Product_Category', 'N/A')}' with priority '{o.get('Order_Priority', 'N/A')}'" for o in response_data[:5]]
+                        )
+
+                elif intent == "PRODUCT_SEARCH":
+                    response = await client.post(PRODUCT_API_URL, json={"query": chat_query.query})
+                    response.raise_for_status()
+                    products = response.json()
+                    context = "Context from product search:\n" + "\n".join([f"- Title: {p['title']}, Price: ${p.get('price', 'N/A')}, Rating: {p.get('average_rating', 'N/A')}" for p in products])
+                
+                break
+
             except httpx.RequestError as e:
-                context = f"Context: Could not connect to the order service: {e}"
-
-        elif intent == "PRODUCT_SEARCH":
-            try:
-                response = await client.post(PRODUCT_API_URL, json={"query": chat_query.query})
-                products = response.json()
-                context = "Context from product search:\n" + "\n".join([f"- Title: {p['title']}, Price: ${p.get('price', 'N/A')}, Rating: {p.get('average_rating', 'N/A')}" for p in products])
-            except httpx.RequestError as e:
-                context = f"Context: Could not connect to the product service: {e}"
-
-
+                context = f"Context: Could not connect to the service. Attempt {attempt + 1} of 3."
+                time.sleep(2)
+    
     prompt = f"""You are a helpful and friendly e-commerce assistant. 
     Your primary goal is to answer the user's question based ONLY on the context provided below.
 
